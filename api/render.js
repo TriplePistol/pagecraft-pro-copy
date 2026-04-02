@@ -96,6 +96,8 @@ export default async function handler(req, res) {
     const DARK   = '#161616';
     const GOLD   = '#c8a050';
     const YELLOW = '#ffc800';
+    const BELLET = '#e3ddcc';
+    
 
     // 폰트 패밀리 (등록된 폰트 사용, 없으면 fallback)
     const fontFamily = fontsLoaded ? 'NotoSansKR' : 'sans-serif';
@@ -167,12 +169,12 @@ export default async function handler(req, res) {
     }
     function text(str, x, y, color, size, bold=false) {
       ctx.fillStyle = color;
-      ctx.font = `${bold ? '700' : '400'} ${size}px "${fontR}", sans-serif`;
+      ctx.font = `${bold ? '900' : '700'} ${size}px "${fontR}", sans-serif`;
       ctx.fillText(str, x, y);
     }
     function centerText(str, y, color, size, bold=false) {
       ctx.fillStyle = color;
-      ctx.font = `${bold ? '700' : '400'} ${size}px "${fontR}", sans-serif`;
+      ctx.font = `${bold ? '900' : '700'} ${size}px "${fontR}", sans-serif`;
       const w2 = ctx.measureText(str).width;
       ctx.fillText(str, (W - w2) / 2, y);
     }
@@ -183,7 +185,7 @@ export default async function handler(req, res) {
     }
     function wrapText(str, x, y, maxW, size, color, lhAdd=8, bold=false) {
       ctx.fillStyle = color;
-      ctx.font = `${bold ? '700' : '400'} ${size}px "${fontR}", sans-serif`;
+      ctx.font = `${bold ? '900' : '700'} ${size}px "${fontR}", sans-serif`;
       const lh = size + lhAdd;
       let cur = '';
       let cy = y;
@@ -230,20 +232,20 @@ export default async function handler(req, res) {
     y += copyH;
 
     // ── 4. 판매 포인트 ──
-    fillRect(0, y, W, ptH, BG);
-    line(60, y+28, 100, y+28, GOLD, 2);
-    text('SELLING POINTS', 108, y+23, GOLD, 10);
+    fillRect(0, y, W, ptH, BELLET);
+    line(60, y+36, 100, y+36, GOLD, 2);
+    text('SELLING POINTS', 108, y+31, GOLD, 10);
     const pts = d.selling_points || [];
     const colW = (W-80)/3;
     const px = y+60;
     for (let i=0; i<3; i++) {
       const cx = 40 + i*(colW+10);
       ctx.fillStyle = LGRAY;
-      ctx.font = `700 28px "${fontR}", sans-serif`;
+      ctx.font = `900 28px "${fontR}", sans-serif`;
       ctx.fillText(`0${i+1}`, cx, px+42);
       line(cx, px+48, cx+colW-10, px+48, LINE);
       ctx.fillStyle = BLACK;
-      ctx.font = `700 12px "${fontR}", sans-serif`;
+      ctx.font = `900 12px "${fontR}", sans-serif`;
       ctx.fillText((pts[i]||'').slice(0,10), cx, px+64);
       if (pts[i]) wrapText(pts[i], cx, px+82, colW-10, 11, GRAY, 6);
     }
@@ -280,7 +282,7 @@ export default async function handler(req, res) {
     }
 
     // ── 7. 스펙 표 ──
-    fillRect(0, y, W, specH, BG);
+    fillRect(0, y, W, specH, BELLET);
     line(60, y+36, 100, y+36, GOLD, 2);
     text('SPECIFICATION', 108, y+31, GOLD, 10);
     const specs = d.specs || [];
@@ -288,10 +290,10 @@ export default async function handler(req, res) {
     for (const s of specs) {
       line(60, sy+30, W-60, sy+30, LINE);
       ctx.fillStyle = BLACK;
-      ctx.font = `700 12px "${fontR}", sans-serif`;
+      ctx.font = `900 12px "${fontR}", sans-serif`;
       ctx.fillText(s.key, 70, sy+20);
       ctx.fillStyle = GRAY;
-      ctx.font = `400 12px "${fontR}", sans-serif`;
+      ctx.font = `700 12px "${fontR}", sans-serif`;
       ctx.fillText(s.value, 220, sy+20);
       sy += 31;
     }
@@ -304,7 +306,7 @@ export default async function handler(req, res) {
     const kws = d.keywords || [];
     let kx = 60, ky = y+50;
     for (const kw of kws) {
-      ctx.font = `400 11px "${fontR}", sans-serif`;
+      ctx.font = `700 11px "${fontR}", sans-serif`;
       const kw2 = '#'+kw;
       const kw_w = ctx.measureText(kw2).width + 18;
       if (kx + kw_w > W-60) { kx=60; ky+=32; }
@@ -317,7 +319,7 @@ export default async function handler(req, res) {
     y += kwH;
 
     // ── 9. 주의사항 ──
-    fillRect(0, y, W, cautH, BG);
+    fillRect(0, y, W, cautH, BELLET);
     line(60, y+36, 100, y+36, GOLD, 2);
     text('CAUTION', 108, y+31, GOLD, 10);
     const cauts = (d.caution||'').split(/[.。]/).filter(c=>c.trim().length>2).slice(0,3);
