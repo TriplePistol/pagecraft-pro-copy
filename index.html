@@ -1204,25 +1204,76 @@ async function runTitleGen() {
     ? `상품명: ${resultData.product_name}, 카테고리: ${cat}, 특징: ${(resultData.selling_points||[]).join(', ')}`
     : `브랜드: ${brand}, 상품명: ${pname}, 카테고리: ${cat}, 특징: ${feats}, 메모: ${memo}`;
 
-  const sys = `당신은 쿠팡/스마트스토어 상품명 최적화 전문가입니다. 반드시 순수 JSON만 출력하세요.`;
-  const usr = `아래 상품 정보를 바탕으로 SEO 최적화된 상품명 5가지를 생성해주세요.
+  // ── 2-1. 쿠팡 자동완성 스크래핑으로 실제 인기 검색어 수집 ──
+  let coupangKeywords = [];
+  let coupangBySeed = [];
+  try {
+    // 시드 키워드: 상품명/브랜드/카테고리 조합
+    const seedList = [];
+    const basePname = (resultData && resultData.product_name) || pname;
+    if (basePname) seedList.push(basePname);
+    if (brand && basePname) seedList.push(`${brand} ${basePname}`);
+    if (cat && basePname) seedList.push(`${cat} ${basePname}`);
+    if (brand) seedList.push(brand);
+    const seeds = [...new Set(seedList)].slice(0,4).join(',');
+    if (seeds) {
+      document.getElementById('titleResult').innerHTML =
+        '<div class="tool-empty">🔍 쿠팡 인기 검색어 수집 중...</div>';
+      const sr = await fetch('/api/coupang-suggest?keyword=' + encodeURIComponent(seeds));
+      if (sr.ok) {
+        const sj = await sr.json();
+        coupangKeywords = sj.suggestions || [];
+        coupangBySeed  = sj.bySeed || [];
+      }
+    }
+  } catch(e) { console.warn('쿠팡 자동완성 실패(무시):', e); }
 
-상품 정보: ${productInfo}
+  document.getElementById('titleResult').innerHTML =
+    '<div class="tool-empty">AI가 쿠팡 최적화 상품명을 생성 중입니다...</div>';
+
+  // ── 2-2. 규칙 기반 프롬프트 엔지니어링 ──
+  const coupangRules = `
+[쿠팡 상품명 작성 규칙 — 반드시 준수]
+1) 길이: 공백 포함 50자 이내 (쿠팡 권장). 40~50자 사이가 이상적.
+2) 구조: [브랜드] [핵심키워드/카테고리] [속성1] [속성2] [용도/대상] [모델/수량]
+   예) "락앤락 밀폐용기 직사각 1.2L 전자레인지 김치통 1개입"
+3) 핵심키워드(대표 검색어)는 반드시 앞쪽 10자 이내에 배치.
+4) 금지 사항:
+   - 특수문자/이모지/기호: ★ ♥ ♡ ! ? ~ # @ % & [대괄호 제외 불가시 사용 최소화]
+   - 과장/최상급 표현: "최고", "최저가", "1위", "정품보장", "무조건", "100%"
+   - 동일 키워드 반복(2회 이상 금지), 동의어 나열도 최소화
+   - 띄어쓰기 없는 붙여쓰기, 쉼표·슬래시 나열 금지 (공백으로만 구분)
+5) 반드시 포함 권장: 소재/색상/사이즈/수량/규격/용도/대상/호환기종 중 해당되는 것
+6) 검색 매칭을 위해 "실제 쿠팡 자동완성 인기 검색어"를 자연스럽게 1~3개 조합할 것
+   (단, 관련 없는 키워드 남용은 어뷰징으로 금지)
+7) 각 상품명은 서로 다른 키워드 조합/전략을 사용해 중복되지 않게 작성.
+`;
+
+  const coupangKwBlock = coupangKeywords.length
+    ? `\n[쿠팡 자동완성 인기 검색어 (실제 스크래핑 결과)]\n- 통합 상위: ${coupangKeywords.slice(0,20).join(' / ')}\n${coupangBySeed.map(b=>`- "${b.seed}" 연관: ${(b.suggestions||[]).slice(0,8).join(', ')||'(없음)'}`).join('\n')}\n→ 위 검색어 중 상품과 실제로 관련 있는 것을 우선적으로 상품명에 녹여 넣으세요.`
+    : `\n[쿠팡 자동완성] 수집 실패 또는 결과 없음 → 일반 SEO 원칙으로 작성하세요.`;
+
+  const sys = `당신은 쿠팡 상품명 SEO 최적화 전문가입니다. 쿠팡 검색 알고리즘(상품명 매칭, 카테고리 매칭, 품질 점수)을 숙지하고 있습니다. 반드시 순수 JSON만 출력하세요. 마크다운/설명/코드펜스 금지.`;
+
+  const usr = `아래 상품의 쿠팡 검색 최적화 상품명 5가지를 생성해주세요.
+
+[상품 정보]
+${productInfo}
 플랫폼: ${pf}
+${coupangKwBlock}
+${coupangRules}
 
-규칙:
-- 각 상품명은 40자 이내
-- 검색량이 많은 키워드를 앞에 배치
-- 브랜드명, 소재, 특징, 사이즈/색상 정보 포함
-- 각각 다른 전략으로 작성 (키워드 중심, 특징 중심, 타깃 중심 등)
-
-{"titles": [
-  {"rank": 1, "strategy": "키워드 중심", "title": "..."},
-  {"rank": 2, "strategy": "특징 강조", "title": "..."},
-  {"rank": 3, "strategy": "타깃 명확화", "title": "..."},
-  {"rank": 4, "strategy": "브랜드 강조", "title": "..."},
-  {"rank": 5, "strategy": "혜택 중심", "title": "..."}
-]}`;
+[출력 형식 — 순수 JSON]
+{"titles":[
+  {"rank":1,"strategy":"핵심키워드 선점형","title":"...","used_keywords":["..."],"char_count":0},
+  {"rank":2,"strategy":"속성/스펙 강조형","title":"...","used_keywords":["..."],"char_count":0},
+  {"rank":3,"strategy":"타깃/용도 명확화형","title":"...","used_keywords":["..."],"char_count":0},
+  {"rank":4,"strategy":"브랜드 신뢰형","title":"...","used_keywords":["..."],"char_count":0},
+  {"rank":5,"strategy":"롱테일 조합형","title":"...","used_keywords":["..."],"char_count":0}
+]}
+- used_keywords 에는 해당 상품명에서 사용한 쿠팡 자동완성 키워드만 기재.
+- char_count 는 공백 포함 실제 글자수.
+- 모든 title 은 50자 이내.`;
 
   try {
     const resp = await fetch('/api/generate', {
@@ -1256,14 +1307,21 @@ async function runTitleGen() {
     
     const titles = parsed.titles || [];
 
-    document.getElementById('titleResult').innerHTML = titles.map(t => `
+    document.getElementById('titleResult').innerHTML = titles.map(t => {
+      const len = (t.char_count!=null) ? t.char_count : (t.title||'').length;
+      const lenColor = len>50 ? 'var(--red)' : (len>=40 ? 'var(--accent)' : 'var(--text3)');
+      const usedKw = Array.isArray(t.used_keywords) && t.used_keywords.length
+        ? `<div style="font-size:11px;color:var(--text3);margin-top:4px">🔎 ${t.used_keywords.join(', ')}</div>` : '';
+      return `
       <div class="title-card">
-        <div class="title-rank">${t.rank}. ${t.strategy}</div>
+        <div class="title-rank">${t.rank}. ${t.strategy} <span style="float:right;font-size:11px;color:${lenColor}">${len}자</span></div>
         <div class="title-text">${t.title}</div>
-        <button class="title-copy" onclick="cp(this,'${t.title.replace(/'/g,"\'")}')">복사</button>
-      </div>`).join('');
+        ${usedKw}
+        <button class="title-copy" onclick="cp(this,'${(t.title||'').replace(/'/g,"\\'")}')">복사</button>
+      </div>`;
+    }).join('') + (coupangKeywords.length ? `<div style="margin-top:12px;padding:10px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--text3)">🔥 쿠팡 자동완성 수집: ${coupangKeywords.slice(0,15).join(' · ')}</div>` : '');
 
-    toast('✨ 최적화 상품명 5개 생성 완료!');
+    toast(coupangKeywords.length ? `✨ 쿠팡 인기검색어 ${coupangKeywords.length}개 반영 완료!` : '✨ 최적화 상품명 5개 생성 완료!');
   } catch(e) {
     document.getElementById('titleResult').innerHTML =
       `<div class="tool-empty" style="color:var(--red)">오류: ${e.message}</div>`;
