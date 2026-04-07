@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<link rel="icon" type="image/x-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAgCAYAAACcuBHKAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAPqSURBVFhH7ZRfTFtVHMe/59xSeqGF1kKBQpstNIOoiMAQkPgA+xNnAotZlsyHmbhpMPFhkmxqwhKc+uJYVPbiWDD4MiMmIomZZi7ZXJYxkqUsxkR8mGN0wOhoaW/b297Se8/xZRfLdYExJT7I5+n8vr/vufnmd3J/wCab/AcwCS1Mhtuo61CjsAEQAIehosHY0NnwEExGGYAWAM3G3obDAt0ik3CIxXCNSdCYhAUmYZBJaDF6/41JkPhYz/74xMmdxgYIiKE2r6gfsNK0TjgfyFEuXj5sdrr6eI41SNWcTlp/4rdsD5PhhoqLAEZpIXqyezqPPQke+dQev+TvMztdfQTEymdvlrN0pN7oo/m4B+A6gHFjT+exQvh8/bnxicn3rXbxCAGxqoGbIVUo7KblwrdGL+cgAL6ACX5dY4FukfOBHL1e93P4fP25EYwff6lWOdR70OH28lsharK9beo4f87o1eEclBCwv+qBHEST+bDnyYR0ZVa616Cioll0+l758KnWY6xo26v84L6XZ1M/HXjT6HsUmIRjTEIH1vUcjobCKIo/Ki2p6EnIMZJIRH8c/jnaLu7++ozRqvP0geslpz4Ze/3Zdyafz9ZZoFsEQQ2A6mx9VfJd7SXeZ94Y1SdgcXf+YHG0eo0+I2cGJz4OhZN8bHzu9/p9N5raa78vB3opALA4avRVvuYkLI5Wr7O0csBms3cGF4JEjkeGBTXxmhK5FtA9nIMyCR08COsDiTRWjzhtlsKGqck0Fqa4b4fd8p2n2D3SXru9DACoDb/SfMxhrRBmZ1uVy/Pk6ewAVJOPyPcvBbN9PIYmELzHLWgDgN3PXd5bs2XrhT9uqM1DpwL8wnCIymFWyjnfbsq1NmbfxWoh8tw76so9lV/ZbPbO6bu3NTkRHkwpc13GAAAIAarAsQ1ANeegBaLFoWa0uvlpJS8Rz/BEPMMj0RSPJmOEJrHT+Fc+NESBZ8+uEtfWQQahfvrubU1TlS9TqfmjiPgloxcAR8HAOQAnCcEQIWDz9+77Q0kpMhMMI5qMkWgyRhZliabVDGG5SlNj9cgT2R/4W4gCz55dxS7PWQahPrwYUsGWTq8SAABASFeGKPgcNiwCQJpqs+rS0lRazZDUUkpZigu3wmnTqKQK76qL6lssfyG24v7yaf83QsH4UHuxy3NW1cgWPYAdC8dnZsZT2ZfWppc2171w1GKiZWZCrkSjsV802/yM3//wxbQcwuJo9ZqsRVctYqFXUeR/EECnlwInlrfkagj6QRVdEIS8SqZlipgmf1YmvvjBnTuDykr7erjCjcojUVHRLJqdbVU+X3+usbfJJpv8b/kTiDOlAdybDUEAAAAASUVORK5CYII=">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PageCraft Pro v2.0 — 상품 상세페이지 · 상품명 · 태그 생성기</title>
@@ -463,6 +462,101 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 /* Scrollbar global */
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+
+/* ── AI 모델 이미지 생성 토글 ── */
+.aimodel-row{
+  display:flex;align-items:center;gap:8px;padding:8px 18px 4px;
+}
+.aimodel-toggle{
+  width:34px;height:18px;border-radius:9px;
+  background:var(--surface3);border:1px solid var(--border2);
+  cursor:pointer;position:relative;transition:all 0.2s;flex-shrink:0;
+}
+.aimodel-toggle.on{background:var(--accent);border-color:var(--accent)}
+.aimodel-toggle-knob{
+  position:absolute;top:2px;left:2px;width:12px;height:12px;
+  border-radius:50%;background:var(--text2);transition:all 0.2s;
+}
+.aimodel-toggle.on .aimodel-toggle-knob{
+  transform:translateX(16px);background:#0c0c10;
+}
+.aimodel-label{font-size:11px;color:var(--text2);flex:1}
+.aimodel-badge{
+  font-size:9px;padding:2px 6px;border-radius:4px;
+  background:rgba(62,207,142,0.12);color:var(--green);font-weight:600;
+}
+/* 성별 선택 (AI 모델 스위치 ON일 때만 표시) */
+.aimodel-gender-row{
+  display:none;align-items:center;gap:8px;padding:2px 18px 6px;
+}
+.aimodel-gender-row.show{display:flex}
+.gender-switch{
+  display:flex;border:1px solid var(--border2);border-radius:6px;overflow:hidden;
+}
+.gender-opt{
+  padding:4px 12px;font-size:10px;font-weight:600;cursor:pointer;
+  background:var(--surface2);color:var(--text3);border:none;
+  font-family:var(--font);transition:all 0.15s;
+}
+.gender-opt.active{background:var(--accent);color:#0c0c10}
+.aimodel-count{
+  font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:auto;
+}
+
+/* ── 이미지 드래그 순서 변경 ── */
+.thumb.dragging{opacity:0.4;border-color:var(--accent)}
+.thumb.drag-over{border:2px solid var(--accent);transform:scale(1.05)}
+
+/* ── 선택 배경 제거 체크박스 ── */
+.thumb-checkbox{
+  position:absolute;bottom:3px;left:3px;width:16px;height:16px;
+  border-radius:4px;background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.3);
+  cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center;
+  font-size:10px;color:transparent;transition:all 0.15s;
+}
+.thumb-checkbox.checked{
+  background:var(--accent);border-color:var(--accent);color:#0c0c10;
+}
+
+/* ── AI 모델 생성 버튼 + 횟수 ── */
+.aimodel-action-row{
+  display:none;flex-direction:column;gap:6px;padding:4px 18px 8px;
+}
+.aimodel-action-row.show{display:flex}
+.aimodel-gen-btn{
+  width:100%;padding:8px;border-radius:7px;font-size:11px;font-weight:700;
+  background:var(--green);border:none;color:#fff;cursor:pointer;
+  font-family:var(--font);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.aimodel-gen-btn:hover:not(:disabled){background:#2db87a;transform:translateY(-1px)}
+.aimodel-gen-btn:disabled{background:var(--surface3);color:var(--text3);cursor:not-allowed;transform:none}
+.aimodel-gen-btn .mini-spin{
+  width:12px;height:12px;border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:none;
+}
+.aimodel-gen-btn.loading .mini-spin{display:inline-block}
+.aimodel-gen-btn.loading .btn-label{display:none}
+.aimodel-usage{
+  font-size:10px;color:var(--text3);font-family:var(--mono);
+  display:flex;align-items:center;gap:6px;
+}
+.aimodel-usage-bar{width:100%;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;flex:1}
+.aimodel-usage-fill{height:100%;background:var(--green);border-radius:2px;transition:width 0.3s}
+
+/* ── 이미지 미리보기 모달 ── */
+.img-preview-modal{
+  position:fixed;inset:0;z-index:10000;
+  background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;cursor:pointer;
+}
+.img-preview-modal.show{display:flex}
+.img-preview-modal img{max-width:90vw;max-height:90vh;border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,0.5)}
+.img-preview-close{
+  position:fixed;top:20px;right:24px;width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:18px;
+  cursor:pointer;z-index:10001;display:flex;align-items:center;justify-content:center;
+}
+.img-preview-close:hover{background:rgba(255,255,255,0.3)}
 </style>
 </head>
 <body>
@@ -503,7 +597,40 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
     <span id="bgStatusText">배경 제거 준비 중...</span>
     <div class="bgremove-progress"><div class="bgremove-progress-bar" id="bgProgressBar"></div></div>
   </div>
+
+  <div class="aimodel-row">
+    <div class="aimodel-toggle" id="aiModelToggle" onclick="toggleAiModel()">
+      <div class="aimodel-toggle-knob"></div>
+    </div>
+    <span class="aimodel-label">AI 모델 이미지 생성</span>
+    <span class="aimodel-badge">AI</span>
+  </div>
+  <div class="aimodel-gender-row" id="aiModelGenderRow">
+    <span style="font-size:10px;color:var(--text3);margin-left:18px">모델 성별</span>
+    <div class="gender-switch">
+      <button class="gender-opt active" data-gender="female" onclick="setGender(this)">여성</button>
+      <button class="gender-opt" data-gender="male" onclick="setGender(this)">남성</button>
+    </div>
+    <span class="aimodel-count" id="aiModelCount"></span>
+  </div>
+  <div class="aimodel-action-row" id="aiModelActionRow">
+    <button class="aimodel-gen-btn" id="aiModelGenBtn" onclick="generateModelImage()">
+      <div class="mini-spin"></div>
+      <span class="btn-label">🧑 이미지 생성</span>
+    </button>
+    <div class="aimodel-usage">
+      <span id="aiModelUsageText">0/100 사용</span>
+      <div class="aimodel-usage-bar"><div class="aimodel-usage-fill" id="aiModelUsageFill" style="width:0%"></div></div>
+    </div>
+  </div>
+
   <div id="thumbGrid" class="thumb-grid"></div>
+
+  <!-- 이미지 미리보기 모달 -->
+  <div class="img-preview-modal" id="imgPreviewModal" onclick="closePreview()">
+    <button class="img-preview-close" onclick="closePreview()">✕</button>
+    <img id="imgPreviewSrc" src="" alt="미리보기">
+  </div>
 
   <div class="divider"></div>
 
@@ -703,6 +830,11 @@ let bgRemoveEnabled = false;
 let bgRemoveModel = null;
 let bgRemoveModelLoading = false;
 
+// AI 모델 이미지 생성
+let aiModelEnabled = false;
+let aiModelGender = 'female';
+let aiModelGeneratedThisSession = false; // 상세페이지당 1개 제한
+
 // ── 테마 전환 ─────────────────────────────────
 const root = document.documentElement;
 const savedTheme = localStorage.getItem('pagecraft-theme') || 'dark';
@@ -764,12 +896,17 @@ function toggleBgRemove() {
     loadBgRemoveModel();
   }
 
-  // 이미 업로드된 이미지가 있으면 배경 제거 다시 처리
+  // 이미 업로드된 이미지가 있으면 선택된 것만 배경 제거 처리
   if (bgRemoveEnabled && imgs.length > 0) {
-    processAllBgRemoval();
+    const hasSelected = imgs.some(im => im.bgSelected);
+    if (hasSelected) {
+      processSelectedBgRemoval();
+    } else {
+      processAllBgRemoval();
+    }
   } else if (!bgRemoveEnabled && imgs.length > 0) {
     // 토글 해제 시 원본으로 복원
-    imgs.forEach(im => { if (im.original) im.data = im.original; });
+    imgs.forEach(im => { if (im.original) im.data = im.original; im.bgProcessed = false; });
     renderThumbs();
   }
 }
@@ -867,6 +1004,38 @@ async function processAllBgRemoval() {
   }
 }
 
+// ── 선택된 이미지만 배경 제거 ──
+async function processSelectedBgRemoval() {
+  if (!bgRemoveEnabled) return;
+  if (bgRemoveModelLoading) {
+    await new Promise(resolve => {
+      const check = setInterval(() => { if (!bgRemoveModelLoading) { clearInterval(check); resolve(); } }, 300);
+    });
+  }
+  if (!bgRemoveModel) return;
+
+  for (let i = 0; i < imgs.length; i++) {
+    const im = imgs[i];
+    if (!im.bgSelected) continue; // 선택 안 된 이미지 스킵
+    if (im.bgProcessed) continue;
+
+    if (!im.original) im.original = im.data;
+    renderThumbs();
+    const thumbEl = document.getElementById('thumbGrid').children[i];
+    if (thumbEl) {
+      const overlay = document.createElement('div');
+      overlay.className = 'thumb-processing';
+      overlay.innerHTML = '<div class="mini-spinner"></div>';
+      thumbEl.appendChild(overlay);
+    }
+
+    const result = await removeBgFromDataUrl(im.original);
+    im.data = result;
+    im.bgProcessed = true;
+    renderThumbs();
+  }
+}
+
 // ── 업로드 ────────────────────────────────────
 document.getElementById('fi').onchange = e => handleFiles(e.target.files);
 
@@ -899,7 +1068,6 @@ function clearSingle(thumbId, kind) {
 }
 setupSingleUpload('dzStore', 'fiStore', 'storeThumb', 'store');
 setupSingleUpload('dzTerms', 'fiTerms', 'termsThumb', 'terms');
-
 const dz = document.getElementById('dz');
 dz.onclick = () => document.getElementById('fi').click();
 dz.ondragover = e => { e.preventDefault(); dz.classList.add('drag'); };
@@ -962,15 +1130,119 @@ async function handleFiles(files) {
 
 function renderThumbs() {
   document.getElementById('thumbGrid').innerHTML = imgs.map((im,i) =>
-    `<div class="thumb" style="position:relative">
+    `<div class="thumb" style="position:relative" draggable="true"
+          ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event)" ondragenter="onDragEnter(event)"
+          ondragleave="onDragLeave(event)" ondrop="onDrop(event,${i})" ondragend="onDragEnd(event)"
+          onclick="openPreview(${i})">
       <img src="${im.data}">
       ${im.bgProcessed ? '<div class="thumb-done">✓</div>' : ''}
-      <button class="thumb-del" onclick="rmImg(${i})">✕</button>
+      ${im.isAiModel ? '<div style="position:absolute;top:3px;left:3px;font-size:8px;background:var(--green);color:#fff;padding:1px 4px;border-radius:3px;z-index:2">AI</div>' : ''}
+      <div class="thumb-checkbox ${im.bgSelected ? 'checked' : ''}" onclick="event.stopPropagation();toggleBgSelect(${i})">✓</div>
+      <button class="thumb-del" onclick="event.stopPropagation();rmImg(${i})">✕</button>
     </div>`
   ).join('');
   document.getElementById('statusImgs').textContent = `사진 ${imgs.length}장`;
 }
 function rmImg(i) { imgs.splice(i,1); renderThumbs(); }
+
+// ── 이미지 미리보기 모달 ──
+function openPreview(i) {
+  if (i < 0 || i >= imgs.length) return;
+  document.getElementById('imgPreviewSrc').src = imgs[i].data;
+  document.getElementById('imgPreviewModal').classList.add('show');
+}
+function closePreview() {
+  document.getElementById('imgPreviewModal').classList.remove('show');
+  document.getElementById('imgPreviewSrc').src = '';
+}
+
+// ── 이미지 드래그 순서 변경 ──
+let dragIdx = null;
+function onDragStart(e, i) { dragIdx = i; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+function onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function onDragEnter(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function onDragEnd(e) { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.thumb').forEach(t => t.classList.remove('drag-over')); }
+function onDrop(e, targetIdx) {
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+  if (dragIdx === null || dragIdx === targetIdx) return;
+  const [moved] = imgs.splice(dragIdx, 1);
+  imgs.splice(targetIdx, 0, moved);
+  dragIdx = null;
+  renderThumbs();
+  toast('📷 이미지 순서가 변경되었습니다');
+}
+
+// ── 선택 이미지 배경 제거 ──
+function toggleBgSelect(i) {
+  imgs[i].bgSelected = !imgs[i].bgSelected;
+  renderThumbs();
+}
+
+// ── AI 모델 이미지 생성 토글 ──
+function toggleAiModel() {
+  aiModelEnabled = !aiModelEnabled;
+  document.getElementById('aiModelToggle').classList.toggle('on', aiModelEnabled);
+  document.getElementById('aiModelGenderRow').classList.toggle('show', aiModelEnabled);
+  document.getElementById('aiModelActionRow').classList.toggle('show', aiModelEnabled);
+}
+function setGender(btn) {
+  document.querySelectorAll('.gender-opt').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  aiModelGender = btn.dataset.gender;
+}
+function updateAiModelCount() {
+  const el = document.getElementById('aiModelCount');
+  if (el) el.textContent = aiModelGeneratedThisSession ? '생성됨 ✓' : '';
+}
+function updateAiModelUsageUI(remaining, limit) {
+  const used = limit - remaining;
+  document.getElementById('aiModelUsageText').textContent = `${used}/${limit} 사용`;
+  document.getElementById('aiModelUsageFill').style.width = `${(used / limit) * 100}%`;
+  if (remaining <= 0) document.getElementById('aiModelGenBtn').disabled = true;
+}
+
+// ── AI 모델 이미지 독립 생성 (버튼 클릭) ──
+async function generateModelImage() {
+  if (aiModelGeneratedThisSession) {
+    toast('⚠️ 이번 상세페이지에서 이미 모델 이미지를 생성했습니다.');
+    return;
+  }
+  const pname = document.getElementById('pname').value.trim();
+  const cat = document.getElementById('cat').value;
+  if (!pname && imgs.length === 0) {
+    toast('⚠️ 상품명을 입력하거나 상품 사진을 업로드해주세요.');
+    return;
+  }
+  const btn = document.getElementById('aiModelGenBtn');
+  btn.disabled = true; btn.classList.add('loading');
+  try {
+    const resp = await fetch('/api/generate-model', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        productName: pname || cat, category: cat, gender: aiModelGender,
+        productImages: imgs.slice(0, 5).map(im => im.data)
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok && data.image) {
+      imgs.push({ name: 'ai-model.png', data: data.image, original: data.image, bgProcessed: false, isAiModel: true });
+      renderThumbs();
+      aiModelGeneratedThisSession = true;
+      updateAiModelCount();
+      updateAiModelUsageUI(data.remaining, data.limit || 100);
+      toast(`✅ AI 모델 이미지 생성 완료! (${data.remaining}회 남음)`);
+    } else {
+      toast(`⚠️ ${data.error || '모델 이미지 생성 실패'}`);
+      if (data.remaining !== undefined) updateAiModelUsageUI(data.remaining, data.limit || 100);
+    }
+  } catch (e) {
+    console.error('AI 모델 이미지 생성 에러:', e);
+    toast('⚠️ 모델 이미지 생성 중 오류가 발생했습니다.');
+  }
+  btn.disabled = aiModelGeneratedThisSession;
+  btn.classList.remove('loading');
+}
 
 // ── 칩 ───────────────────────────────────────
 document.querySelectorAll('#chips .chip').forEach(c => {
@@ -1106,6 +1378,43 @@ document.getElementById('genBtn').onclick = async function() {
     }
 
     resultData = parsed;
+
+    // 왼쪽 입력란의 상품명이 있으면 그대로 제목에 사용
+    if (pname) parsed.product_name = pname;
+
+    // ── AI 모델 이미지 생성 (스위치 ON + 아직 미생성 시) ──
+    if (aiModelEnabled && !aiModelGeneratedThisSession) {
+      document.getElementById('loadMsg').textContent = 'AI 모델 이미지 생성 중...';
+      document.getElementById('loadSub').textContent = `${aiModelGender === 'male' ? '남성' : '여성'} 모델이 상품을 착용한 이미지를 생성합니다`;
+      try {
+        const modelResp = await fetch('/api/generate-model', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            productName: parsed.product_name || pname,
+            category: cat,
+            gender: aiModelGender,
+            productImages: imgs.slice(0, 5).map(im => im.data)
+          })
+        });
+        if (modelResp.ok) {
+          const modelData = await modelResp.json();
+          if (modelData.image) {
+            imgs.push({ name: 'ai-model.png', data: modelData.image, original: modelData.image, bgProcessed: false, isAiModel: true });
+            renderThumbs();
+            aiModelGeneratedThisSession = true;
+            updateAiModelCount();
+            updateAiModelUsageUI(modelData.remaining, modelData.limit || 100);
+            toast(`✅ AI 모델 이미지 생성 완료! (${modelData.remaining}회 남음)`);
+          }
+        } else {
+          const errData = await modelResp.json().catch(() => ({}));
+          console.warn('AI 모델 이미지 생성 실패:', errData.error || modelResp.status);
+          toast(`⚠️ 모델 이미지 생성 실패: ${errData.error || '알 수 없는 오류'}`);
+        }
+      } catch (modelErr) {
+        console.warn('AI 모델 이미지 생성 에러:', modelErr);
+      }
+    }
 
     document.getElementById('loadMsg').textContent = '이미지 렌더링 중...';
     document.getElementById('loadSub').textContent = '상세페이지를 이미지로 변환 중';
@@ -1293,7 +1602,6 @@ async function runTitleGen() {
   document.getElementById('titleResult').innerHTML =
     '<div class="tool-empty">AI가 쿠팡 최적화 상품명을 생성 중입니다...</div>';
 
-  // ── 2-2. 규칙 기반 프롬프트 엔지니어링 ──
   const coupangRules = `
 [쿠팡 상품명 작성 규칙 — 반드시 준수]
 1) 길이: 공백 포함 50자 이내 (쿠팡 권장). 40~50자 사이가 이상적.
@@ -1301,11 +1609,11 @@ async function runTitleGen() {
    예) "락앤락 밀폐용기 직사각 1.2L 전자레인지 김치통 1개입"
 3) 핵심키워드(대표 검색어)는 반드시 앞쪽 10자 이내에 배치.
 4) 금지 사항:
-   - 특수문자/이모지/기호: ★ ♥ ♡ ! ? ~ # @ % & [대괄호 제외 불가시 사용 최소화]
+   - 특수문자/이모지/기호: ★ ♥ ♡ ! ? ~ # @ % &
    - 과장/최상급 표현: "최고", "최저가", "1위", "정품보장", "무조건", "100%"
-   - 동일 키워드 반복(2회 이상 금지), 동의어 나열도 최소화
-   - 띄어쓰기 없는 붙여쓰기, 쉼표·슬래시 나열 금지 (공백으로만 구분)
-5) 반드시 포함 권장: 소재/색상/사이즈/수량/규격/용도/대상/호환기종 중 해당되는 것
+   - 동일 키워드 반복(2회 이상 금지), 동의어 나열 최소화
+   - 쉼표·슬래시 나열 금지 (공백으로만 구분)
+5) 반드시 포함 권장: 소재/색상/사이즈/수량/규격/용도/대상/호환기종 중 해당 항목
 6) 검색 매칭을 위해 "실제 쿠팡 자동완성 인기 검색어"를 자연스럽게 1~3개 조합할 것
    (단, 관련 없는 키워드 남용은 어뷰징으로 금지)
 7) 각 상품명은 서로 다른 키워드 조합/전략을 사용해 중복되지 않게 작성.
@@ -1435,7 +1743,7 @@ ${coupangRules}
   btn.disabled = false; btn.classList.remove('loading');
 }
 
-// ── 3. 쿠팡 태그 20개 생성 (쿠팡 자동완성 기반) ────
+// ── 3. 쿠팡 태그 20개 생성 ──────────────────────
 async function runTagGen() {
   const brand = document.getElementById('brand').value.trim();
   const pname = document.getElementById('pname').value.trim();
@@ -1483,16 +1791,10 @@ ${coupangKwBlock}
 
 [쿠팡 태그 작성 규칙]
 1) 각 태그는 2~12자 이내, 한글 위주 (영문/숫자는 꼭 필요할 때만)
-2) 중복 금지, 의미 중복도 최소화 (예: "밀폐용기"와 "밀폐용기세트"는 허용, "밀폐용기"와 "밀폐통"은 하나만)
-3) 특수문자/이모지/공백·쉼표·슬래시 금지 (태그 내부 공백 가능, 태그끼리는 배열로 분리)
+2) 중복 금지, 의미 중복도 최소화
+3) 특수문자/이모지/쉼표/슬래시 금지 (태그 내부 공백 가능)
 4) 과장·최상급 표현 금지: "최고","1위","정품보장","무료배송","100%"
-5) 다양한 층위를 섞을 것:
-   - 핵심 카테고리어 (예: 밀폐용기, 이어폰)
-   - 브랜드/상품명
-   - 소재/색상/사이즈/수량
-   - 용도/상황 (예: 도시락, 캠핑용, 사무실용)
-   - 타깃 (예: 1인가구, 신혼, 자취생)
-   - 롱테일 조합 (예: 전자레인지밀폐용기)
+5) 다양한 층위를 섞을 것: 카테고리어 / 브랜드·상품명 / 소재·색상·사이즈·수량 / 용도·상황 / 타깃 / 롱테일 조합
 6) 쿠팡 자동완성 결과가 있으면 그중 관련 있는 것을 8개 이상 반드시 포함할 것.
 7) 정확히 20개.
 
@@ -1525,12 +1827,11 @@ ${coupangKwBlock}
       if (s0!==-1 && e0>s0) parsed = tryParse(cleanRaw.slice(s0,e0+1));
     }
     let tags = (parsed && Array.isArray(parsed.tags)) ? parsed.tags : [];
-    // fallback: "tag" 같은 문자열만이라도 뽑아내기
     if (tags.length === 0) {
       const strRe = /"((?:[^"\\]|\\.){1,20})"/g;
       tags = [...cleanRaw.matchAll(strRe)].map(m=>m[1]).filter(s=>s && s!=='tags' && !/^\s*$/.test(s));
     }
-    // 쿠팡 키워드로 보강: 20개 못 채우면 자동완성 결과로 채움
+    // 쿠팡 키워드로 보강
     if (tags.length < 20 && coupangKeywords.length) {
       const existing = new Set(tags.map(t=>t.replace(/\s/g,'').toLowerCase()));
       for (const kw of coupangKeywords) {
@@ -1542,7 +1843,6 @@ ${coupangKwBlock}
     tags = tags.slice(0,20);
     if (tags.length === 0) { console.error('태그 파싱 실패 — 원본:', raw); throw new Error('태그 파싱 실패. 다시 시도해주세요.'); }
 
-    // 쿠팡 자동완성 출처 태그는 하이라이트
     const kwSet = new Set(coupangKeywords.map(k=>k.replace(/\s/g,'').toLowerCase()));
     const tagCloud = tags.map(tag => {
       const isCoupang = kwSet.has(tag.replace(/\s/g,'').toLowerCase());

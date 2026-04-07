@@ -1,6 +1,6 @@
 {
   "name": "pagecraft-pro",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "AI 상품 상세페이지 생성기 — 패션/의류/잡화 특화",
   "scripts": {
     "build": "node setup-fonts.js"

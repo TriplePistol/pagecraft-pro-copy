@@ -8,7 +8,10 @@ let fontsLoaded = false;
 async function ensureFonts() {
   if (fontsLoaded) return;
 
-  // 1순위: 프로젝트에 번들된 폰트
+  const tmpDir = '/tmp/pagecraft-fonts';
+  if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
+
+  // ── Regular 폰트 로드 ──
   const projectDir = process.cwd();
   const bundledPaths = [
     join(projectDir, 'fonts', 'NotoSansKR-Regular.ttf'),
@@ -27,48 +30,92 @@ async function ensureFonts() {
       if (existsSync(boldPath)) {
         GlobalFonts.registerFromPath(boldPath, 'NotoSansKRBold');
       }
-      return;
+      break;
     }
   }
 
-  // 2순위: /tmp에 캐시된 폰트
-  const tmpDir = '/tmp/pagecraft-fonts';
+  // /tmp 캐시 체크
   const cachedFont = join(tmpDir, 'NotoSansKR.otf');
-
-  if (existsSync(cachedFont)) {
+  if (!fontsLoaded && existsSync(cachedFont)) {
     GlobalFonts.registerFromPath(cachedFont, 'NotoSansKR');
     fontsLoaded = true;
     console.log('Font loaded from /tmp cache');
-    return;
   }
 
-  // 3순위: CDN에서 다운로드 → /tmp에 캐시
-  const fontUrls = [
-    'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/public/static/Pretendard-Regular.otf',
-    'https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/SubsetOTF/KR/NotoSansKR-Regular.otf',
-    'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.0.19/files/noto-sans-kr-all-400-normal.woff',
-  ];
+  // CDN 다운로드 (Regular)
+  if (!fontsLoaded) {
+    const fontUrls = [
+      'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/public/static/Pretendard-Regular.otf',
+      'https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/SubsetOTF/KR/NotoSansKR-Regular.otf',
+      'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.0.19/files/noto-sans-kr-all-400-normal.woff',
+    ];
 
-  if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
-
-  for (const url of fontUrls) {
-    try {
-      console.log('Downloading font from:', url);
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      if (!res.ok) continue;
-      const buf = Buffer.from(await res.arrayBuffer());
-      if (buf.length < 10000) continue; // 너무 작으면 실패
-      writeFileSync(cachedFont, buf);
-      GlobalFonts.registerFromPath(cachedFont, 'NotoSansKR');
-      fontsLoaded = true;
-      console.log('Font downloaded and registered from:', url);
-      return;
-    } catch (e) {
-      console.warn('Font download failed for', url, e.message);
+    for (const url of fontUrls) {
+      try {
+        console.log('Downloading font from:', url);
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) continue;
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.length < 10000) continue;
+        writeFileSync(cachedFont, buf);
+        GlobalFonts.registerFromPath(cachedFont, 'NotoSansKR');
+        fontsLoaded = true;
+        console.log('Font downloaded and registered from:', url);
+        break;
+      } catch (e) {
+        console.warn('Font download failed for', url, e.message);
+      }
     }
   }
 
-  console.error('⚠️ 한글 폰트를 로드할 수 없습니다. fonts/ 디렉토리에 NotoSansKR-Regular.ttf를 넣어주세요.');
+  // ── Heavy(Black) 폰트 로드 (강조 텍스트용) ──
+  const heavyBundled = [
+    join(projectDir, 'fonts', 'NotoSansKR-Black.ttf'),
+    join(projectDir, 'public', 'fonts', 'NotoSansKR-Black.ttf'),
+  ];
+  let heavyLoaded = false;
+  for (const p of heavyBundled) {
+    if (existsSync(p)) {
+      GlobalFonts.registerFromPath(p, 'NotoSansKRHeavy');
+      heavyLoaded = true;
+      console.log('Heavy font loaded from bundled path:', p);
+      break;
+    }
+  }
+
+  const cachedHeavy = join(tmpDir, 'NotoSansKR-Black.otf');
+  if (!heavyLoaded && existsSync(cachedHeavy)) {
+    GlobalFonts.registerFromPath(cachedHeavy, 'NotoSansKRHeavy');
+    heavyLoaded = true;
+    console.log('Heavy font loaded from /tmp cache');
+  }
+
+  if (!heavyLoaded) {
+    const heavyUrls = [
+      'https://cdn.jsdelivr.net/gh/googlefonts/noto-cjk@main/Sans/SubsetOTF/KR/NotoSansKR-Black.otf',
+      'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/packages/pretendard/dist/public/static/Pretendard-Black.otf',
+    ];
+    for (const url of heavyUrls) {
+      try {
+        console.log('Downloading heavy font from:', url);
+        const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) continue;
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.length < 10000) continue;
+        writeFileSync(cachedHeavy, buf);
+        GlobalFonts.registerFromPath(cachedHeavy, 'NotoSansKRHeavy');
+        heavyLoaded = true;
+        console.log('Heavy font downloaded and registered from:', url);
+        break;
+      } catch (e) {
+        console.warn('Heavy font download failed for', url, e.message);
+      }
+    }
+  }
+
+  if (!fontsLoaded) {
+    console.error('⚠️ 한글 폰트를 로드할 수 없습니다. fonts/ 디렉토리에 NotoSansKR-Regular.ttf를 넣어주세요.');
+  }
 }
 
 // ── 메인 핸들러 ──
@@ -96,11 +143,12 @@ export default async function handler(req, res) {
     const DARK   = '#161616';
     const GOLD   = '#c8a050';
     const YELLOW = '#ffc800';
-    const SISAL  = '#E5E1D6';
 
     // 폰트 패밀리 (등록된 폰트 사용, 없으면 fallback)
     const fontFamily = fontsLoaded ? 'NotoSansKR' : 'sans-serif';
     const fontR = fontFamily;
+    // Heavy(Black) 폰트 — 메인카피, 판매포인트 제목, 스펙 키에 사용
+    const fontH = GlobalFonts.families.some(f => f.family === 'NotoSansKRHeavy') ? 'NotoSansKRHeavy' : fontR;
 
     // 섹션 높이
     const heroH   = 110;
@@ -225,12 +273,12 @@ export default async function handler(req, res) {
     }
     function text(str, x, y, color, size, bold=false) {
       ctx.fillStyle = color;
-      ctx.font = `${bold ? '900' : '700'} ${size}px "${fontR}", sans-serif`;
+      ctx.font = `${bold ? '700' : '500'} ${size}px "${fontR}", sans-serif`;
       ctx.fillText(str, x, y);
     }
     function centerText(str, y, color, size, bold=false) {
       ctx.fillStyle = color;
-      ctx.font = `${bold ? '900' : '700'} ${size}px "${fontR}", sans-serif`;
+      ctx.font = `${bold ? '700' : '500'} ${size}px "${fontR}", sans-serif`;
       const w2 = ctx.measureText(str).width;
       ctx.fillText(str, (W - w2) / 2, y);
     }
@@ -239,9 +287,10 @@ export default async function handler(req, res) {
       ctx.lineWidth = lw;
       ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
     }
-    function wrapText(str, x, y, maxW, size, color, lhAdd=8, bold=false) {
+    function wrapText(str, x, y, maxW, size, color, lhAdd=8, bold=false, useHeavy=false) {
       ctx.fillStyle = color;
-      ctx.font = `${bold ? '900' : '700'} ${size}px "${fontR}", sans-serif`;
+      const face = useHeavy ? fontH : fontR;
+      ctx.font = `${bold ? '700' : '500'} ${size}px "${face}", sans-serif`;
       const lh = size + lhAdd;
       let cur = '';
       let cy = y;
@@ -282,7 +331,19 @@ export default async function handler(req, res) {
     const bt = 'NATIONAL GEOGRAPHIC STYLE  ·  FASHION & ACCESSORY';
     centerText(bt, y+24, YELLOW, 10);
     const ti = d.product_name || '상품 상세페이지';
-    centerText(ti.length > 18 ? ti.slice(0,18)+'...' : ti, y+58, '#ffffff', 24, true);
+    // 제목 (두껍게 — stroke + fill, 길이 제한 없음 / 너무 길면 자동 축소)
+    const titleStr = ti;
+    const maxTitleW = W - 80;
+    let titleSize = 24;
+    ctx.font = `700 ${titleSize}px "${fontH}", sans-serif`;
+    while (ctx.measureText(titleStr).width > maxTitleW && titleSize > 12) {
+      titleSize -= 1;
+      ctx.font = `700 ${titleSize}px "${fontH}", sans-serif`;
+    }
+    const tw = ctx.measureText(titleStr).width;
+    const tx = (W - tw) / 2;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(titleStr, tx, y+58);
     const su = d.subtitle || '';
     centerText(su, y+86, LGRAY, 13);
     y += heroH;
@@ -305,7 +366,7 @@ export default async function handler(req, res) {
     let cy = y+60;
     const copyLines = (d.main_copy||'').split('\n');
     for (const cl of copyLines) {
-      cy = wrapText(cl, 60, cy, W-120, 18, BLACK, 8, true);
+      cy = wrapText(cl, 60, cy, W-120, 18, BLACK, 8, true, true);
     }
     y += copyH;
 
@@ -322,20 +383,20 @@ export default async function handler(req, res) {
     // ══════════════════════════════════════════════
     // 6. 판매 포인트
     // ══════════════════════════════════════════════
-    fillRect(0, y, W, ptH, SISAL);
-    line(60, y+36, 100, y+36, GOLD, 2);
-    text('SELLING POINTS', 108, y+31, GOLD, 10);
+    fillRect(0, y, W, ptH, BG);
+    line(60, y+28, 100, y+28, GOLD, 2);
+    text('SELLING POINTS', 108, y+23, GOLD, 10);
     const pts = d.selling_points || [];
     const colW = (W-80)/3;
     const px = y+60;
     for (let i=0; i<3; i++) {
       const cx = 40 + i*(colW+10);
-      ctx.fillStyle = BG;
-      ctx.font = `900 28px "${fontR}", sans-serif`;
+      ctx.fillStyle = LGRAY;
+      ctx.font = `700 28px "${fontH}", sans-serif`;
       ctx.fillText(`0${i+1}`, cx, px+42);
-      line(cx, px+48, cx+colW-10, px+48, BG);
+      line(cx, px+48, cx+colW-10, px+48, LINE);
       ctx.fillStyle = BLACK;
-      ctx.font = `900 12px "${fontR}", sans-serif`;
+      ctx.font = `700 12px "${fontH}", sans-serif`;
       ctx.fillText((pts[i]||'').slice(0,10), cx, px+64);
       if (pts[i]) wrapText(pts[i], cx, px+82, colW-10, 11, GRAY, 6);
     }
@@ -359,7 +420,7 @@ export default async function handler(req, res) {
       line(60, y+36, 100, y+36, GOLD, 2);
       text('PRODUCT STORY', 108, y+31, GOLD, 10);
       let dy = y+60;
-      dy = wrapText(para1, 60, dy, W-120, 15, GRAY, 6);
+      dy = wrapText(para1, 60, dy, W-120, 13, GRAY, 6);
       y += descH;
     }
 
@@ -378,7 +439,7 @@ export default async function handler(req, res) {
       let dy = y+60;
       const p2Lines = para2.split('\n').filter(Boolean);
       for (const pLine of p2Lines) {
-        dy = wrapText(pLine, 60, dy, W-120, 15, GRAY, 6);
+        dy = wrapText(pLine, 60, dy, W-120, 13, GRAY, 6);
         dy += 14;
       }
       y += descH;
@@ -416,7 +477,7 @@ export default async function handler(req, res) {
     // ══════════════════════════════════════════════
     // 15. 스펙 표
     // ══════════════════════════════════════════════
-    fillRect(0, y, W, specH, SISAL);
+    fillRect(0, y, W, specH, BG);
     line(60, y+36, 100, y+36, GOLD, 2);
     text('SPECIFICATION', 108, y+31, GOLD, 10);
     const specs = d.specs || [];
@@ -424,10 +485,10 @@ export default async function handler(req, res) {
     for (const s of specs) {
       line(60, sy+30, W-60, sy+30, LINE);
       ctx.fillStyle = BLACK;
-      ctx.font = `900 12px "${fontR}", sans-serif`;
+      ctx.font = `700 12px "${fontH}", sans-serif`;
       ctx.fillText(s.key, 70, sy+20);
       ctx.fillStyle = GRAY;
-      ctx.font = `700 12px "${fontR}", sans-serif`;
+      ctx.font = `500 12px "${fontR}", sans-serif`;
       ctx.fillText(s.value, 220, sy+20);
       sy += 31;
     }
@@ -457,7 +518,7 @@ export default async function handler(req, res) {
     // ══════════════════════════════════════════════
     // 17. 주의사항
     // ══════════════════════════════════════════════
-    fillRect(0, y, W, cautH, SISAL);
+    fillRect(0, y, W, cautH, BG);
     line(60, y+36, 100, y+36, GOLD, 2);
     text('CAUTION', 108, y+31, GOLD, 10);
     const cauts = (d.caution||'').split(/[.。]/).filter(c=>c.trim().length>2).slice(0,3);
