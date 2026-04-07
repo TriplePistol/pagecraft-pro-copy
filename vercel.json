@@ -14,6 +14,9 @@
     },
     "api/generate.js": {
       "maxDuration": 30
+    },
+    "api/generate-model.js": {
+      "maxDuration": 60
     }
   }
 }
