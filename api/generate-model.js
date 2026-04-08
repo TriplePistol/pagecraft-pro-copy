@@ -1,16 +1,16 @@
 // ── AI 모델 이미지 생성 ──
-// ⚠️ 테스트용: 5분당 2개 제한 (프로덕션에서는 월 100개로 변경)
-const TEST_CYCLE_MS = 5 * 60 * 1000; // 5분
-const TEST_LIMIT = 2;
+// gemini-2.5-flash-image 모델로 상품 착용 모델 이미지 생성
+// 월 100개 제한 (인메모리 카운터 — Vercel 서버리스에서는 cold start마다 리셋됨)
+// ⚠️ 프로덕션에서는 KV/DB 기반 카운터로 교체 필요
 
-let monthlyCount = { start: Date.now(), count: 0 };
+let monthlyCount = { month: new Date().getMonth(), count: 0 };
 
 function checkMonthlyLimit() {
-  const now = Date.now();
-  if (now - monthlyCount.start >= TEST_CYCLE_MS) {
-    monthlyCount = { start: now, count: 0 };
+  const now = new Date().getMonth();
+  if (monthlyCount.month !== now) {
+    monthlyCount = { month: now, count: 0 };
   }
-  return monthlyCount.count < TEST_LIMIT;
+  return monthlyCount.count < 100;
 }
 
 // ── 카테고리별 촬영 포커스 결정 ──
@@ -68,9 +68,9 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     checkMonthlyLimit();
     return res.status(200).json({
-      remaining: TEST_LIMIT - monthlyCount.count,
+      remaining: 100 - monthlyCount.count,
       used: monthlyCount.count,
-      limit: TEST_LIMIT,
+      limit: 100,
       currentMonth: monthlyCount.month,
       note: '⚠️ 인메모리 카운터: Vercel cold start 시 리셋됨. 프로덕션에서는 KV/DB 사용 권장.'
     });
@@ -84,7 +84,7 @@ export default async function handler(req, res) {
   if (!checkMonthlyLimit()) {
     return res.status(429).json({
       error: '이번 달 AI 모델 이미지 생성 한도(100개)를 초과했습니다.',
-      remaining: 0, used: monthlyCount.count, limit: TEST_LIMIT
+      remaining: 0, used: monthlyCount.count, limit: 100
     });
   }
 
@@ -93,7 +93,7 @@ export default async function handler(req, res) {
     monthlyCount.count = parseInt(req.body._testCount, 10) || 0;
     return res.status(200).json({
       message: `테스트: 카운터를 ${monthlyCount.count}로 설정했습니다.`,
-      remaining: TEST_LIMIT - monthlyCount.count, used: monthlyCount.count, limit: TEST_LIMIT
+      remaining: 100 - monthlyCount.count, used: monthlyCount.count, limit: 100
     });
   }
 
@@ -116,8 +116,10 @@ SUBJECT: A Korean ${genderEn} model in their late 20s wearing/using "${productNa
 CAMERA & COMPOSITION:
 - ${focus.shot}
 - Crop: ${focus.crop}
+- The product MUST be positioned at the CENTER of the image frame
 - The product on the ${focus.part} must be the visual focal point of the image
 - Use shallow depth of field to draw attention to the product area
+- Center the product both horizontally and vertically in the composition
 
 IMPORTANT — PRODUCT vs CATEGORY CONFLICT:
 - If the reference images show a product that does NOT match the category "${category}", ALWAYS follow what the reference images show.
@@ -187,9 +189,9 @@ TECHNICAL:
 
     return res.status(200).json({
       image: `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`,
-      remaining: TEST_LIMIT - monthlyCount.count,
+      remaining: 100 - monthlyCount.count,
       used: monthlyCount.count,
-      limit: TEST_LIMIT,
+      limit: 100,
       focus: focus.part
     });
 
